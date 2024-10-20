@@ -1,0 +1,71 @@
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
+import matplotlib.pyplot as plt
+
+data = {
+    'Outlook': ['Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain', 'Overcast', 'Sunny', 'Sunny', 'Rain', 'Sunny', 'Overcast', 'Overcast', 'Rain'],
+    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Mild', 'Mild', 'Cool', 'Cool', 'Mild', 'Mild', 'Hot', 'Mild'],
+    'Humidity': ['High', 'High', 'High', 'High', 'Normal', 'Normal', 'Normal', 'High', 'Normal', 'Normal', 'Normal', 'High', 'Normal', 'Normal'],
+    'Windy': [False, True, False, False, False, True, True, False, True, True, False, True, True, False],
+    'Play': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
+}
+
+df = pd.DataFrame(data)
+
+df['Outlook'] = df['Outlook'].astype('category').cat.codes
+df['Temperature'] = df['Temperature'].astype('category').cat.codes
+df['Humidity'] = df['Humidity'].astype('category').cat.codes
+df['Play'] = df['Play'].map({'No': 0, 'Yes': 1})
+
+X = df[['Outlook', 'Temperature', 'Humidity', 'Windy']]
+y = df['Play']
+
+clf = DecisionTreeClassifier()
+clf.fit(X, y)
+
+plt.figure(figsize=(12, 10))  # Increased figure size
+tree.plot_tree(clf, filled=True, feature_names=['Outlook', 'Temperature', 'Humidity', 'Windy'],
+               class_names=['No', 'Yes'], fontsize=10)  # Increased fontsize
+plt.title("Decision Tree for Weather Prediction", fontsize=14)  # Title font size
+plt.show()
+
+print("Encoding mapping:")
+print("Outlook: {'Sunny': 2, 'Overcast': 0, 'Rain': 1}")
+print("Temperature: {'Hot': 1, 'Mild': 2, 'Cool': 0}")
+print("Humidity: {'High': 0, 'Normal': 1}")
+print("Windy: {False: 0, True: 1}")
+
+def predict_play(outlook, temperature, humidity, windy):
+    outlook_map = {'Sunny': 2, 'Overcast': 0, 'Rain': 1}
+    temperature_map = {'Hot': 1, 'Mild': 2, 'Cool': 0}
+    humidity_map = {'High': 0, 'Normal': 1}
+
+    outlook_code = outlook_map[outlook]
+    temperature_code = temperature_map[temperature]
+    humidity_code = humidity_map[humidity]
+    windy_code = int(windy)
+   
+    print("\nEncoded values for prediction:")
+    print("Outlook: {} -> {}".format(outlook, outlook_code))
+    print("Temperature: {} -> {}".format(temperature, temperature_code))
+    print("Humidity: {} -> {}".format(humidity, humidity_code))
+    print("Windy: {} -> {}".format(windy, windy_code))
+   
+    prediction = clf.predict([[outlook_code, temperature_code, humidity_code, windy_code]])
+   
+    node_indicator = clf.decision_path([[outlook_code, temperature_code, humidity_code, windy_code]])
+    leave_id = clf.apply([[outlook_code, temperature_code, humidity_code, windy_code]])
+    print("\nDecision path taken by the decision tree:")
+    for i, node in enumerate(node_indicator.indices):
+        if node in leave_id:
+            print("Reached leaf node: {}".format(node))
+
+        else:
+           print("Decision node: {}".format(node))
+
+
+    return "Yes" if prediction[0] == 1 else "No"
+
+result = predict_play('Sunny', 'Mild', 'Normal', False)
+print("\nFinal Decision: Can play football?", result)
